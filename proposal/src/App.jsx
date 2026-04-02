@@ -1,22 +1,59 @@
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 
 const App = () => {
   const [name, setName] = useState("");
   const [mail, setMail] = useState("");
+  const [deal, setDeal] = useState("");
+  const [note, setNote] = useState("");
+  const [num, setNum] = useState("");
   const [compname, setCompname] = useState("");
-  const [step, setStep] = useState(1);
   const [service, setService] = useState("");
   const [quant, setQuant] = useState("");
   const [price, setPrice] = useState("");
   const [press, setPress] = useState([]);
+  const [step, setStep] = useState(1);
   const handle = () => setStep(2);
   const before = () => setStep(1);
   const after = () => setStep(3);
+  const [loaded, setLoaded] = useState(false);
   const sub = name.length >= 3 && mail.includes("@") && compname.length >= 3;
   const not = service != "" && quant != "" && price != "";
   const con = () => console.log({ name, mail, compname, press });
+
+  const edit = (id) => {
+    const handleEdit = press.find((item) => item.id === id);
+    if (handleEdit) {
+      setService(handleEdit.service);
+      setQuant(handleEdit.quant);
+      setPrice(handleEdit.price);
+    }
+  };
+
+  useEffect(() => {
+    const saved = localStorage.getItem("proposal");
+    if (saved) {
+      const data = JSON.parse(saved);
+      setName(data.name);
+      setMail(data.mail);
+      setDeal(data.deal);
+      setNote(data.note);
+      setNum(data.num);
+      setCompname(data.compname);
+      setPress(data.press);
+    }
+    setLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!loaded) return;
+    localStorage.setItem(
+      "proposal",
+      JSON.stringify({ name, mail, deal, note, num, compname, press }),
+    );
+  }, [name, mail, deal, note, num, compname, press, loaded]);
+
   return (
     <div className="container">
       {step === 1 && (
@@ -46,6 +83,27 @@ const App = () => {
             onChange={(e) => setCompname(e.target.value)}
           />
 
+          <p>Deal value</p>
+          <input
+            className="inp"
+            type="text"
+            value={deal}
+            onChange={(e) => setDeal(e.target.value)}
+          />
+
+          <p>Notes</p>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          ></textarea>
+
+          <p>Valid Until</p>
+          <input
+            type="number"
+            placeholder="Enter days"
+            value={num}
+            onChange={(e) => setNum(e.target.value)}
+          />
           <button
             className="btn"
             disabled={!sub}
@@ -54,6 +112,7 @@ const App = () => {
           >
             next
           </button>
+
           <p>{step} of 3</p>
         </div>
       )}
@@ -86,7 +145,7 @@ const App = () => {
           <button
             className="btn"
             onClick={() => {
-              setPress([...press, { service, price, quant }]);
+              setPress([...press, { service, price, quant, id: Date.now() }]);
 
               setService("");
               setPrice("");
@@ -105,7 +164,15 @@ const App = () => {
                 service: {item.service} <br />
                 Quantity: {item.quant} <br />
                 Price: {item.price}
-                <button style={{backgroundColor: "blue"}} onClick={() => setPress(press.filter((item, i) => i !== index ))}>Delete</button>
+                <button onClick={() => edit(item.id)}>Edit</button>
+                <button
+                  style={{ backgroundColor: "blue" }}
+                  onClick={() =>
+                    setPress(press.filter((item, i) => i !== index))
+                  }
+                >
+                  Delete
+                </button>
               </li>
             ))}
           </ul>
@@ -132,9 +199,12 @@ const App = () => {
 
       {step === 3 && (
         <div>
-          <p>Name: {name}</p>
-          <p>email: {mail}</p>
-          <p>company: {compname}</p>
+          <h4>Name: {name}</h4>
+          <h4>email: {mail}</h4>
+          <h4> company: {compname}</h4>
+          <h4>Deal Value: {deal}</h4>
+          <p>Notes: {note}</p>
+          <p>Valid until {num} Days</p>
 
           <ul>
             {press.map((item, index) => (
